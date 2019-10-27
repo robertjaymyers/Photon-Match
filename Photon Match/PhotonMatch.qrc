@@ -1,4 +1,5 @@
 <RCC>
-    <qresource prefix="PhotonMatch">
+    <qresource prefix="/PhotonMatch">
+        <file>Icon/photon-match-program-icon.ico</file>
     </qresource>
 </RCC>
