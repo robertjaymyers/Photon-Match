@@ -11,6 +11,7 @@ class PhotonMatch : public QMainWindow
 
 public:
 	PhotonMatch(QWidget *parent = Q_NULLPTR);
+	void closeEvent(QCloseEvent *event);
 
 private:
 	Ui::PhotonMatchClass ui;
@@ -126,6 +127,8 @@ private:
 	std::unique_ptr<QSplashScreen> puzzleCompleteSplash = std::make_unique<QSplashScreen>();
 	//QSplashScreen *puzzleCompleteSplash = new QSplashScreen;
 
+	void prefLoad();
+	void prefSave();
 	void populateCatDisplayList();
 	//void shuffleWordPairsList();
 	void shuffleVecOfQStringList(std::vector<QStringList> &listToShuffle);

@@ -11,6 +11,8 @@
 #include <QDirIterator>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QCloseEvent>
+#include <QSettings>
 
 PhotonMatch::PhotonMatch(QWidget *parent)
 	: QMainWindow(parent)
@@ -95,6 +97,10 @@ PhotonMatch::PhotonMatch(QWidget *parent)
 		currentCatKey = catChoiceDisplayList[currentCatIndex];
 	}
 
+	prefLoad();
+
+	populateFlipCardList();
+
 	//QFile fileRead("english-french-animals-dictionary.txt");
 	//if (fileRead.open(QIODevice::ReadOnly))
 	//{
@@ -109,8 +115,6 @@ PhotonMatch::PhotonMatch(QWidget *parent)
 	//	}
 	//	fileRead.close();
 	//}
-
-	populateFlipCardList();
 
 	////this->setStyleSheet(pushButtonStyleSheet);
 
@@ -233,6 +237,12 @@ PhotonMatch::PhotonMatch(QWidget *parent)
 	////	});
 	////}
 	////connect(flipCardList[0].pushButtonPointer, &QPushButton::clicked, this, &PhotonMatch::flipClickedCard);
+}
+
+void PhotonMatch::closeEvent(QCloseEvent *event)
+{
+	prefSave();
+	event->accept();
 }
 
 void PhotonMatch::chooseLanguage()
@@ -480,6 +490,30 @@ void PhotonMatch::flipClickedCard(const int btnI)
 			this->repaint();
 		}
 	}
+}
+
+void PhotonMatch::prefLoad()
+{
+	QSettings settings(appExecutablePath + "/preferences.ini", QSettings::IniFormat);
+
+	settings.beginGroup("Language");
+	if (!settings.value("preferredLanguage").toString().isEmpty())
+	{
+		currentLangKey = settings.value("preferredLanguage").toString();
+		currentLangIndex = langChoiceDisplayList.indexOf(currentLangKey);
+		populateCatDisplayList();
+		currentCatKey = catChoiceDisplayList[currentCatIndex];
+	}
+	settings.endGroup();
+}
+
+void PhotonMatch::prefSave()
+{
+	QSettings settings(appExecutablePath + "/preferences.ini", QSettings::IniFormat);
+
+	settings.beginGroup("Language");
+	settings.setValue("preferredLanguage", currentLangKey);
+	settings.endGroup();
 }
 
 void PhotonMatch::populateCatDisplayList()
