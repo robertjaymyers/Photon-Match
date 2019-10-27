@@ -44,35 +44,6 @@ private:
 		"English-Spanish",
 	};
 
-	// for word categories, see about filling up a map for each language set based on text files that are read in.
-	// as in, if you read the following text files for english-french:
-	// animals, shapes, colors
-	// then you'd add into a map the key "english-french" with the attached categories QStringList: animals, shapes, colors
-
-	/*std::map<QString, QString> wordPairs = 
-	{
-		{"horse", "le cheval"},
-		{"dog", "le chien"},
-		{"cat", "le chat"},
-		{"cow", "la vache"},
-		{"mouse", "la souris"},
-		{"chicken", "la poule"},
-		{"duck", "le canard"},
-		{"frog", "la grenouille"},
-		{"elephant", "l'éléphant"},
-		{"lion", "le lion"},
-		{"pig", "le cochon"},
-		{"snake", "le serpent"},
-		{"dolphin", "le dauphin"},
-		{"bear", "l'ours"},
-		{"crocodile", "le crocodile"},
-		{"deer", "le cerf"},
-		{"whale", "la baleine"},
-		{"eagle", "l'aigle"},
-		{"giraffe", "la girafe"},
-		{"monkey", "le singe"},
-	};*/
-
 	QStringList langChoiceDisplayList;
 	QString currentLangKey;
 	int currentLangIndex = 0;
@@ -82,31 +53,6 @@ private:
 
 	std::map<QString, std::vector<QStringList>> wordPairsMap;
 	std::map<QString, std::vector<QStringList>>::iterator wordPairsMapIterator;
-
-	//std::vector<QStringList> wordPairsList;
-	/*std::vector<QStringList> wordPairsList = 
-	{
-		{"horse", "le cheval"},
-		{"dog", "le chien"},
-		{"cat", "le chat"},
-		{"cow", "la vache"},
-		{"mouse", "la souris"},
-		{"chicken", "la poule"},
-		{"duck", "le canard"},
-		{"frog", "la grenouille"},
-		{"elephant", "l'éléphant"},
-		{"lion", "le lion"},
-		{"pig", "le cochon"},
-		{"snake", "le serpent"},
-		{"dolphin", "le dauphin"},
-		{"bear", "l'ours"},
-		{"crocodile", "le crocodile"},
-		{"deer", "le cerf"},
-		{"whale", "la baleine"},
-		{"eagle", "l'aigle"},
-		{"giraffe", "la girafe"},
-		{"monkey", "le singe"},
-	};*/
 
 	struct flipCard
 	{
@@ -125,12 +71,10 @@ private:
 	std::vector<flipCard> flipCardList;
 
 	std::unique_ptr<QSplashScreen> puzzleCompleteSplash = std::make_unique<QSplashScreen>();
-	//QSplashScreen *puzzleCompleteSplash = new QSplashScreen;
 
 	void prefLoad();
 	void prefSave();
 	void populateCatDisplayList();
-	//void shuffleWordPairsList();
 	void shuffleVecOfQStringList(std::vector<QStringList> &listToShuffle);
 	void shuffleFlipCardList();
 	std::string extractSubstringInbetween(const std::string strBegin, const std::string strEnd, const std::string &strExtractFrom);
