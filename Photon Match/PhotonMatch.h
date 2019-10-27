@@ -19,11 +19,11 @@ private:
 
 	const QString pushButtonStyleSheet =
 		"QPushButton{ background-color: #CCCCCC; border-style: solid; border-width: 2px; border-color: #404040; }"
-		"QPushButton:hover{ background-color: #6161C8; border-color: #1C1C33; }";
+		"QPushButton:hover{ background-color: #FFD800; border-color: #282200; border-width: 10px; }";
 
 	const QString pushButtonFlippedStyleSheet =
-		"QPushButton{ background-color: #D8D8FF; border-style: solid; border-width: 2px; border-color: #2D2D60; font: bold 14px;}"
-		"QPushButton:hover{ background-color: #D8D8FF; }";
+		"QPushButton{ background-color: #FFF6CC; border-style: solid; border-width: 2px; border-color: #26241E; font: bold 14px;}"
+		"QPushButton:hover{ background-color: #FFF6CC; }";
 
 	const QString pushButtonSolvedStyleSheet =
 		"QPushButton{ background-color: #E5E5E5; border-style: solid; border-width: 2px; border-color: #999999; font: bold 14px;}"
@@ -31,7 +31,7 @@ private:
 
 	const QString pushButtonUtilityEnabledStyleSheet =
 		"QPushButton{ background-color: #CCCCCC; border-style: solid; border-width: 2px; border-color: #404040; padding: 4px; }"
-		"QPushButton:hover{ background-color: #6161C8; border-color: #1C1C33; color: #FFFFFF; }";
+		"QPushButton:hover{ background-color: #FFD800; border-color: #282200; color: #000000; border-width: 4px; }";
 
 	const QString pushButtonUtilityDisabledStyleSheet =
 		"QPushButton{ background-color: #E5E5E5; border-style: solid; border-width: 2px; border-color: #999999; padding: 4px; }"
