@@ -10,6 +10,7 @@
 #include <QDir>
 #include <QDirIterator>
 #include <QInputDialog>
+#include <QMessageBox>
 
 PhotonMatch::PhotonMatch(QWidget *parent)
 	: QMainWindow(parent)
@@ -25,7 +26,12 @@ PhotonMatch::PhotonMatch(QWidget *parent)
 	connect(ui.chooseLangBtn, &QPushButton::clicked, this, &PhotonMatch::chooseLanguage);
 	connect(ui.chooseCategoryBtn, &QPushButton::clicked, this, &PhotonMatch::chooseCategory);
 
-	connect(ui.newPuzzleBtn, &QPushButton::clicked, this, &PhotonMatch::populateFlipCardList);
+	connect(ui.newPuzzleBtn, &QPushButton::clicked, this, [=]() {
+		if (populateFlipCardList())
+			QMessageBox::information(this, tr("New Puzzle Created"), tr("New puzzle created! Have fun!"));
+		else
+			QMessageBox::warning(this, tr("Puzzle Creation Error"), tr("There was an error when trying to create a new puzzle."));
+	});
 
 	QDirIterator dirIt(appExecutablePath + "/WordPairs", QDir::Files, QDirIterator::Subdirectories);
 	while (dirIt.hasNext())
@@ -252,7 +258,7 @@ void PhotonMatch::chooseCategory()
 	}
 }
 
-void PhotonMatch::populateFlipCardList()
+bool PhotonMatch::populateFlipCardList()
 {
 	puzzleCompleteSplash->hide();
 
@@ -276,7 +282,7 @@ void PhotonMatch::populateFlipCardList()
 		qDebug() << currentKeyToFind;
 		wordPairsMapIterator = wordPairsMap.find(currentKeyToFind);
 		if (wordPairsMapIterator == wordPairsMap.end())
-			return;
+			return false;
 
 		std::vector<QStringList> listInWordPairsMap = wordPairsMapIterator->second;
 		shuffleVecOfQStringList(listInWordPairsMap);
@@ -340,6 +346,8 @@ void PhotonMatch::populateFlipCardList()
 	{
 		qDebug() << card.wordDisplay;
 	}
+
+	return true;
 }
 
 //void PhotonMatch::populateFlipCardList()

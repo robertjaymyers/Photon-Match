@@ -135,6 +135,6 @@ private:
 private slots:
 	void chooseLanguage();
 	void chooseCategory();
-	void populateFlipCardList();
+	bool populateFlipCardList();
 	void flipClickedCard(const int btnI);
 };
