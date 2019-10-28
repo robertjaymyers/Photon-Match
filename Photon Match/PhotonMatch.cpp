@@ -19,6 +19,9 @@ PhotonMatch::PhotonMatch(QWidget *parent)
 {
 	ui.setupUi(this);
 
+	ui.menuFile->menuAction()->setVisible(false);
+	ui.mainToolBar->setVisible(false);
+
 	puzzleCompleteSplash->setPixmap(QPixmap(appExecutablePath + "/splash/puzzle-complete-splash.png"));
 
 	ui.newPuzzleBtn->setStyleSheet(pushButtonUtilityEnabledStyleSheet);
@@ -284,10 +287,14 @@ void PhotonMatch::prefLoad()
 	settings.beginGroup("Language");
 	if (!settings.value("preferredLanguage").toString().isEmpty())
 	{
-		currentLangKey = settings.value("preferredLanguage").toString();
-		currentLangIndex = langChoiceDisplayList.indexOf(currentLangKey);
-		populateCatDisplayList();
-		currentCatKey = catChoiceDisplayList[currentCatIndex];
+		QString preferredLanguage = settings.value("preferredLanguage").toString();
+		if (langChoiceDisplayList.contains(preferredLanguage))
+		{
+			currentLangKey = preferredLanguage;
+			currentLangIndex = langChoiceDisplayList.indexOf(currentLangKey);
+			populateCatDisplayList();
+			currentCatKey = catChoiceDisplayList[currentCatIndex];
+		}
 	}
 	settings.endGroup();
 }
