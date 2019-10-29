@@ -120,6 +120,8 @@ void PhotonMatch::chooseLanguage()
 		currentLangKey = langChoice;
 		currentLangIndex = langChoiceDisplayList.indexOf(langChoice);
 		populateCatDisplayList();
+		currentCatIndex = 0;
+		currentCatKey = catChoiceDisplayList[currentCatIndex];
 	}
 }
 
