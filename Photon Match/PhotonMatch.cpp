@@ -244,7 +244,8 @@ void PhotonMatch::flipClickedCard(const int btnI)
 		{
 			this->repaint();
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-			if (flipCardList[flippedFirstIndex].wordKey == flipCardList[btnI].wordKey)
+			if (flipCardList[flippedFirstIndex].wordKey == flipCardList[btnI].wordKey &&
+				flippedFirstIndex != btnI)
 			{
 				// match found, disable at both indices
 				flipCardList[flippedFirstIndex].pushButtonPointer->setEnabled(false);
