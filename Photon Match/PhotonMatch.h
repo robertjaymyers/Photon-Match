@@ -38,11 +38,11 @@ private:
 		"QPushButton{ background-color: #E5E5E5; border-style: solid; border-width: 2px; border-color: #999999; padding: 4px; }"
 		"QPushButton:hover{ background-color: #E5E5E5; }";
 
-	const QStringList wordLanguages = 
+	/*const QStringList wordLanguages = 
 	{
 		"English-French",
 		"English-Spanish",
-	};
+	};*/
 
 	QStringList langChoiceDisplayList;
 	QString currentLangKey;

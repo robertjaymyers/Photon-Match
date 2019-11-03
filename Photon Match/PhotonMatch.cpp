@@ -285,7 +285,30 @@ void PhotonMatch::flipClickedCard(const int btnI)
 
 void PhotonMatch::prefLoad()
 {
-	QSettings settings(appExecutablePath + "/preferences.ini", QSettings::IniFormat);
+	QFile fileRead(appExecutablePath + "/preferences.txt");
+	if (fileRead.open(QIODevice::ReadOnly))
+	{
+		QTextStream contents(&fileRead);
+		while (!contents.atEnd())
+		{
+			QString line = contents.readLine();
+			if (line.contains("preferredLanguage"))
+			{
+				QString preferredLanguage = QString::fromStdString(extractSubstringInbetween("=", "", line.toStdString()));
+				if (!preferredLanguage.isEmpty() && langChoiceDisplayList.contains(preferredLanguage))
+				{
+					currentLangKey = preferredLanguage;
+					currentLangIndex = langChoiceDisplayList.indexOf(currentLangKey);
+					populateCatDisplayList();
+					currentCatKey = catChoiceDisplayList[currentCatIndex];
+				}
+			}
+			line.replace(" ", "\n");
+		}
+		fileRead.close();
+	}
+
+	/*QSettings settings(appExecutablePath + "/preferences.ini", QSettings::IniFormat);
 
 	settings.beginGroup("Language");
 	if (!settings.value("preferredLanguage").toString().isEmpty())
@@ -299,16 +322,24 @@ void PhotonMatch::prefLoad()
 			currentCatKey = catChoiceDisplayList[currentCatIndex];
 		}
 	}
-	settings.endGroup();
+	settings.endGroup();*/
 }
 
 void PhotonMatch::prefSave()
 {
-	QSettings settings(appExecutablePath + "/preferences.ini", QSettings::IniFormat);
+	QFile fileWrite(appExecutablePath + "/preferences.txt");
+	if (fileWrite.open(QIODevice::WriteOnly))
+	{
+		QTextStream contents(&fileWrite);
+		contents << "preferredLanguage=" + currentLangKey;
+		fileWrite.close();
+	}
+
+	/*QSettings settings(appExecutablePath + "/preferences.ini", QSettings::IniFormat);
 
 	settings.beginGroup("Language");
 	settings.setValue("preferredLanguage", currentLangKey);
-	settings.endGroup();
+	settings.endGroup();*/
 }
 
 void PhotonMatch::populateCatDisplayList()
