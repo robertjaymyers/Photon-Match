@@ -13,6 +13,7 @@
 #include <QMessageBox>
 #include <QCloseEvent>
 #include <QSettings>
+#include <QSound>
 
 PhotonMatch::PhotonMatch(QWidget *parent)
 	: QMainWindow(parent)
@@ -64,8 +65,29 @@ PhotonMatch::PhotonMatch(QWidget *parent)
 				while (!contents.atEnd())
 				{
 					QString line = contents.readLine();
-					line.replace(" ", "\n");
 					QStringList wordPair = line.split(",");
+
+					QString soundPathFirst = QFileInfo(currentFile).path();
+					soundPathFirst.replace("WordPairs", "TextToSpeech");
+					soundPathFirst.append("/" + QFileInfo(currentFile).baseName());
+					QString wordFirst = wordPair[0];
+					wordFirst.replace(" ", "");
+					wordFirst.replace("/", "");
+					soundPathFirst.append("/" + wordFirst + ".wav");
+
+					QString soundPathSecond = QFileInfo(currentFile).path();
+					soundPathSecond.replace("WordPairs", "TextToSpeech");
+					soundPathSecond.append("/" + QFileInfo(currentFile).baseName());
+					QString wordSecond = wordPair[1];
+					wordSecond.replace(" ", "");
+					wordSecond.replace("/", "");
+					soundPathSecond.append("/" + wordSecond + ".wav");
+
+					wordPair.append(soundPathFirst);
+					wordPair.append(soundPathSecond);
+
+					wordPair[0].replace(" ", "\n");
+					wordPair[1].replace(" ", "\n");
 					newWordPairsList.push_back(wordPair);
 					//qDebug() << wordPair;
 				}
@@ -171,12 +193,16 @@ bool PhotonMatch::populateFlipCardList()
 			newFlipCard.visState = flipCard::VisState::HIDDEN;
 			newFlipCard.wordKey = listInWordPairsMap[i][0];
 			newFlipCard.wordDisplay = listInWordPairsMap[i][0];
+			if (textToSpeechSetting == "ALL" || textToSpeechSetting == "FIRST")
+				newFlipCard.soundPath = listInWordPairsMap[i][2];
 			tempFlipCardList.push_back(std::move(newFlipCard));
 
 			flipCard newFlipCardMatch;
 			newFlipCardMatch.visState = flipCard::VisState::HIDDEN;
 			newFlipCardMatch.wordKey = listInWordPairsMap[i][0];
 			newFlipCardMatch.wordDisplay = listInWordPairsMap[i][1];
+			if (textToSpeechSetting == "ALL" || textToSpeechSetting == "SECOND")
+				newFlipCardMatch.soundPath = listInWordPairsMap[i][3];
 			tempFlipCardList.push_back(std::move(newFlipCardMatch));
 		}
 
@@ -236,6 +262,15 @@ void PhotonMatch::flipClickedCard(const int btnI)
 		flipCardList[btnI].pushButtonPointer->setStyleSheet(pushButtonFlippedStyleSheet);
 		flipCardList[btnI].visState = flipCard::VisState::FLIPPED;
 		flipCardList[btnI].pushButtonPointer->setText(flipCardList[btnI].wordDisplay);
+		if (textToSpeechSetting == "ALL" || textToSpeechSetting == "FIRST" || textToSpeechSetting == "SECOND")
+		{
+			if (!flipCardList[btnI].soundPath.isEmpty())
+			{
+				QSound::play(flipCardList[btnI].soundPath);
+				//qDebug() << flipCardList[btnI].soundPath;
+			}
+		}
+
 		if (flippedCount == 1)
 		{
 			flippedFirstIndex = btnI;
@@ -303,26 +338,22 @@ void PhotonMatch::prefLoad()
 					currentCatKey = catChoiceDisplayList[currentCatIndex];
 				}
 			}
-			line.replace(" ", "\n");
+			else if (line.contains("textToSpeech"))
+			{
+				QString textToSpeechState = QString::fromStdString(extractSubstringInbetween("=", "", line.toStdString()));
+				if (
+					textToSpeechState == "NONE" ||
+					textToSpeechState == "ALL" ||
+					textToSpeechState == "FIRST" ||
+					textToSpeechState == "SECOND"
+					)
+				{
+					textToSpeechSetting = textToSpeechState;
+				}
+			}
 		}
 		fileRead.close();
 	}
-
-	/*QSettings settings(appExecutablePath + "/preferences.ini", QSettings::IniFormat);
-
-	settings.beginGroup("Language");
-	if (!settings.value("preferredLanguage").toString().isEmpty())
-	{
-		QString preferredLanguage = settings.value("preferredLanguage").toString();
-		if (langChoiceDisplayList.contains(preferredLanguage))
-		{
-			currentLangKey = preferredLanguage;
-			currentLangIndex = langChoiceDisplayList.indexOf(currentLangKey);
-			populateCatDisplayList();
-			currentCatKey = catChoiceDisplayList[currentCatIndex];
-		}
-	}
-	settings.endGroup();*/
 }
 
 void PhotonMatch::prefSave()
@@ -331,15 +362,10 @@ void PhotonMatch::prefSave()
 	if (fileWrite.open(QIODevice::WriteOnly))
 	{
 		QTextStream contents(&fileWrite);
-		contents << "preferredLanguage=" + currentLangKey;
+		contents << "preferredLanguage=" + currentLangKey + "\n";
+		contents << "textToSpeech=" + textToSpeechSetting;
 		fileWrite.close();
 	}
-
-	/*QSettings settings(appExecutablePath + "/preferences.ini", QSettings::IniFormat);
-
-	settings.beginGroup("Language");
-	settings.setValue("preferredLanguage", currentLangKey);
-	settings.endGroup();*/
 }
 
 void PhotonMatch::populateCatDisplayList()

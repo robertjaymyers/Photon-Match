@@ -3,6 +3,7 @@
 #include <QtWidgets/QMainWindow>
 #include "ui_PhotonMatch.h"
 #include <QSplashScreen>
+#include <QSoundEffect>
 #include <memory>
 
 class PhotonMatch : public QMainWindow
@@ -38,12 +39,7 @@ private:
 		"QPushButton{ background-color: #E5E5E5; border-style: solid; border-width: 2px; border-color: #999999; padding: 4px; }"
 		"QPushButton:hover{ background-color: #E5E5E5; }";
 
-	/*const QStringList wordLanguages = 
-	{
-		"English-French",
-		"English-Spanish",
-	};*/
-
+	QString textToSpeechSetting = "NONE";
 	QStringList langChoiceDisplayList;
 	QString currentLangKey;
 	int currentLangIndex = 0;
@@ -61,6 +57,7 @@ private:
 		VisState visState = VisState::HIDDEN;
 		QString wordKey; // the first word in map of pairs
 		QString wordDisplay; // the word to display on the button, can be first word in a pair or second
+		QString soundPath;
 	};
 
 	const int maxFlipped = 2; // The maximum number of "pieces" that can be in the flipped up state at the same time.
