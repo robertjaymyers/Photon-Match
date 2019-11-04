@@ -266,8 +266,11 @@ void PhotonMatch::flipClickedCard(const int btnI)
 		{
 			if (!flipCardList[btnI].soundPath.isEmpty())
 			{
-				QSound::play(flipCardList[btnI].soundPath);
-				//qDebug() << flipCardList[btnI].soundPath;
+				if (QFileInfo::exists(flipCardList[btnI].soundPath))
+				{
+					QSound::play(flipCardList[btnI].soundPath);
+					//qDebug() << flipCardList[btnI].soundPath;
+				}
 			}
 		}
 
