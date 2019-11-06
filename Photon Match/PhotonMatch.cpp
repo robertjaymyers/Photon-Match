@@ -33,6 +33,17 @@ PhotonMatch::PhotonMatch(QWidget *parent)
 	connect(ui.chooseCategoryBtn, &QPushButton::clicked, this, &PhotonMatch::chooseCategory);
 
 	connect(ui.newPuzzleBtn, &QPushButton::clicked, this, [=]() {
+		if (QGuiApplication::queryKeyboardModifiers().testFlag(Qt::ShiftModifier))
+		{
+			std::random_device rd;
+			std::mt19937 mt(rd());
+			std::uniform_int_distribution<int> dist(0, catChoiceDisplayList.length()-1);
+			int randomCatIndex = dist(mt);
+			currentCatIndex = randomCatIndex;
+			currentCatKey = catChoiceDisplayList[currentCatIndex];
+			qDebug() << "Random index is: " + QString::number(randomCatIndex);
+		}
+		
 		if (populateFlipCardList())
 			QMessageBox::information(this, tr("New Puzzle Created"), tr("New puzzle created! Have fun!"));
 		else
