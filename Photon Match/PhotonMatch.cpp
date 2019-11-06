@@ -365,7 +365,7 @@ void PhotonMatch::prefSave()
 	if (fileWrite.open(QIODevice::WriteOnly))
 	{
 		QTextStream contents(&fileWrite);
-		contents << "preferredLanguage=" + currentLangKey + "\n";
+		contents << "preferredLanguage=" + currentLangKey + "\r\n"; // \r is added for notepad linebreak compatibility
 		contents << "textToSpeech=" + textToSpeechSetting;
 		fileWrite.close();
 	}
