@@ -14,6 +14,7 @@
 #include <QCloseEvent>
 #include <QSettings>
 #include <QSound>
+#include <QTimer>
 
 PhotonMatch::PhotonMatch(QWidget *parent)
 	: QMainWindow(parent)
@@ -291,43 +292,43 @@ void PhotonMatch::flipClickedCard(const int btnI)
 		}
 		else if (flippedCount == 2)
 		{
-			this->repaint();
-			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-			if (flipCardList[flippedFirstIndex].wordKey == flipCardList[btnI].wordKey &&
-				flippedFirstIndex != btnI)
-			{
-				// match found, disable at both indices
-				flipCardList[flippedFirstIndex].pushButtonPointer->setEnabled(false);
-				flipCardList[btnI].pushButtonPointer->setEnabled(false);
-				flipCardList[flippedFirstIndex].visState = flipCard::VisState::SOLVED;
-				flipCardList[btnI].visState = flipCard::VisState::SOLVED;
-				flipCardList[flippedFirstIndex].pushButtonPointer->setStyleSheet(pushButtonSolvedStyleSheet);
-				flipCardList[btnI].pushButtonPointer->setStyleSheet(pushButtonSolvedStyleSheet);
-				solvedCount++;
-				flippedCount = 0;
-
-				if (solvedCount == (flipCardListSize / 2))
+			QTimer::singleShot(1000, this, [=](){
+				if (flipCardList[flippedFirstIndex].wordKey == flipCardList[btnI].wordKey &&
+					flippedFirstIndex != btnI)
 				{
-					// do puzzle is complete operations
-					// probably call another function to do this
-					qDebug("Puzzle complete!");
-					puzzleCompleteSplash->show();
+					// match found, disable at both indices
+					flipCardList[flippedFirstIndex].pushButtonPointer->setEnabled(false);
+					flipCardList[btnI].pushButtonPointer->setEnabled(false);
+					flipCardList[flippedFirstIndex].visState = flipCard::VisState::SOLVED;
+					flipCardList[btnI].visState = flipCard::VisState::SOLVED;
+					flipCardList[flippedFirstIndex].pushButtonPointer->setStyleSheet(pushButtonSolvedStyleSheet);
+					flipCardList[btnI].pushButtonPointer->setStyleSheet(pushButtonSolvedStyleSheet);
+					solvedCount++;
+					flippedCount = 0;
+
+					if (solvedCount == (flipCardListSize / 2))
+					{
+						// do puzzle is complete operations
+						// probably call another function to do this
+						qDebug("Puzzle complete!");
+						puzzleCompleteSplash->show();
+					}
 				}
-			}
-			else
-			{
-				// match not found, wait for a short period of time...
-				// then change cards back to hidden state...
-				// and reset flipped variables, like count and stored index
-				flipCardList[flippedFirstIndex].visState = flipCard::VisState::HIDDEN;
-				flipCardList[btnI].visState = flipCard::VisState::HIDDEN;
-				flipCardList[flippedFirstIndex].pushButtonPointer->setText("");
-				flipCardList[btnI].pushButtonPointer->setText("");
-				flipCardList[flippedFirstIndex].pushButtonPointer->setStyleSheet(pushButtonStyleSheet);
-				flipCardList[btnI].pushButtonPointer->setStyleSheet(pushButtonStyleSheet);
-				flippedCount = 0;
-			}
-			this->repaint();
+				else
+				{
+					// match not found, wait for a short period of time...
+					// then change cards back to hidden state...
+					// and reset flipped variables, like count and stored index
+					flipCardList[flippedFirstIndex].visState = flipCard::VisState::HIDDEN;
+					flipCardList[btnI].visState = flipCard::VisState::HIDDEN;
+					flipCardList[flippedFirstIndex].pushButtonPointer->setText("");
+					flipCardList[btnI].pushButtonPointer->setText("");
+					flipCardList[flippedFirstIndex].pushButtonPointer->setStyleSheet(pushButtonStyleSheet);
+					flipCardList[btnI].pushButtonPointer->setStyleSheet(pushButtonStyleSheet);
+					flippedCount = 0;
+				}
+				//qDebug("Timer went off.");
+			});
 		}
 	}
 }
