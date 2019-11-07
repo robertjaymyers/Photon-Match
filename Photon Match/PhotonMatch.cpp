@@ -100,6 +100,8 @@ PhotonMatch::PhotonMatch(QWidget *parent)
 
 					wordPair[0].replace(" ", "\n");
 					wordPair[1].replace(" ", "\n");
+					wordPair[0].replace("[code]comma[/code]", ",", Qt::CaseSensitive);
+					wordPair[1].replace("[code]comma[/code]", ",", Qt::CaseSensitive);
 					newWordPairsList.push_back(wordPair);
 					//qDebug() << wordPair;
 				}
