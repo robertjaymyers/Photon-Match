@@ -75,6 +75,7 @@ private:
 	void shuffleVecOfQStringList(std::vector<QStringList> &listToShuffle);
 	void shuffleFlipCardList();
 	std::string extractSubstringInbetween(const std::string strBegin, const std::string strEnd, const std::string &strExtractFrom);
+	QString extractSubstringInbetweenQt(const QString strBegin, const QString strEnd, const QString &strExtractFrom);
 
 private slots:
 	void chooseLanguage();

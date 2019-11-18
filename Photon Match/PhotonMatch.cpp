@@ -16,6 +16,8 @@
 #include <QSound>
 #include <QTimer>
 
+// TODO: Adapt reading of text files to extract [id]example[/id] as well as the string itself.
+
 PhotonMatch::PhotonMatch(QWidget *parent)
 	: QMainWindow(parent)
 {
@@ -82,28 +84,32 @@ PhotonMatch::PhotonMatch(QWidget *parent)
 					QString soundPathFirst = QFileInfo(currentFile).path();
 					soundPathFirst.replace("WordPairs", "TextToSpeech");
 					soundPathFirst.append("/" + QFileInfo(currentFile).baseName());
-					QString wordFirst = wordPair[0];
-					wordFirst.replace(" ", "");
-					wordFirst.replace("/", "");
-					soundPathFirst.append("/" + wordFirst + ".wav");
+					QString wordFirstId = extractSubstringInbetweenQt("[id]", "[/id]", wordPair[0]);
+					soundPathFirst.append("/" + wordFirstId + ".wav");
 
 					QString soundPathSecond = QFileInfo(currentFile).path();
 					soundPathSecond.replace("WordPairs", "TextToSpeech");
 					soundPathSecond.append("/" + QFileInfo(currentFile).baseName());
-					QString wordSecond = wordPair[1];
-					wordSecond.replace(" ", "");
-					wordSecond.replace("/", "");
-					soundPathSecond.append("/" + wordSecond + ".wav");
+					QString wordSecondId = extractSubstringInbetweenQt("[id]", "[/id]", wordPair[1]);
+					soundPathSecond.append("/" + wordSecondId + ".wav");
 
-					wordPair.append(soundPathFirst);
-					wordPair.append(soundPathSecond);
+					if (QFileInfo::exists(soundPathFirst))
+						wordPair.append(soundPathFirst);
+					else
+						wordPair.append("NO TTS");
 
+					if (QFileInfo::exists(soundPathSecond))
+						wordPair.append(soundPathSecond);
+					else
+						wordPair.append("NO TTS");
+
+					wordPair[0] = extractSubstringInbetweenQt("[/id]", "", wordPair[0]);
+					wordPair[1] = extractSubstringInbetweenQt("[/id]", "", wordPair[1]);
 					wordPair[0].replace(" ", "\n");
 					wordPair[1].replace(" ", "\n");
 					wordPair[0].replace("[code]comma[/code]", ",", Qt::CaseSensitive);
 					wordPair[1].replace("[code]comma[/code]", ",", Qt::CaseSensitive);
 					newWordPairsList.push_back(wordPair);
-					//qDebug() << wordPair;
 				}
 				fileRead.close();
 			}
@@ -277,16 +283,8 @@ void PhotonMatch::flipClickedCard(const int btnI)
 		flipCardList[btnI].visState = flipCard::VisState::FLIPPED;
 		flipCardList[btnI].pushButtonPointer->setText(flipCardList[btnI].wordDisplay);
 		if (textToSpeechSetting == "ALL" || textToSpeechSetting == "FIRST" || textToSpeechSetting == "SECOND")
-		{
-			if (!flipCardList[btnI].soundPath.isEmpty())
-			{
-				if (QFileInfo::exists(flipCardList[btnI].soundPath))
-				{
-					QSound::play(flipCardList[btnI].soundPath);
-					//qDebug() << flipCardList[btnI].soundPath;
-				}
-			}
-		}
+			if (!flipCardList[btnI].soundPath.isEmpty() && flipCardList[btnI].soundPath != "NO TTS")
+				QSound::play(flipCardList[btnI].soundPath);
 
 		if (flippedCount == 1)
 		{
@@ -424,7 +422,7 @@ std::string PhotonMatch::extractSubstringInbetween(const std::string strBegin, c
 		while (strExtractFrom.find(strBegin, posFound) != std::string::npos)
 		{
 			int posBegin = strExtractFrom.find(strBegin, posFound) + strBegin.length();
-			int posEnd = strExtractFrom.find(strEnd, posBegin) + 1 - strEnd.length();
+			int posEnd = strExtractFrom.find(strEnd, posBegin);
 			extracted.append(strExtractFrom, posBegin, posEnd - posBegin);
 			posFound = posEnd;
 		}
@@ -432,7 +430,7 @@ std::string PhotonMatch::extractSubstringInbetween(const std::string strBegin, c
 	else if (strBegin.empty() && !strEnd.empty())
 	{
 		int posBegin = 0;
-		int posEnd = strExtractFrom.find(strEnd, posBegin) + 1 - strEnd.length();
+		int posEnd = strExtractFrom.find(strEnd, posBegin);
 		extracted.append(strExtractFrom, posBegin, posEnd - posBegin);
 		posFound = posEnd;
 	}
@@ -441,6 +439,38 @@ std::string PhotonMatch::extractSubstringInbetween(const std::string strBegin, c
 		int posBegin = strExtractFrom.find(strBegin, posFound) + strBegin.length();
 		int posEnd = strExtractFrom.length();
 		extracted.append(strExtractFrom, posBegin, posEnd - posBegin);
+		posFound = posEnd;
+	}
+	return extracted;
+}
+
+QString PhotonMatch::extractSubstringInbetweenQt(const QString strBegin, const QString strEnd, const QString &strExtractFrom)
+{
+	QString extracted;
+	int posFound = 0;
+
+	if (!strBegin.isEmpty() && !strEnd.isEmpty())
+	{
+		while (strExtractFrom.indexOf(strBegin, posFound, Qt::CaseSensitive) != -1)
+		{
+			int posBegin = strExtractFrom.indexOf(strBegin, posFound, Qt::CaseSensitive) + strBegin.length();
+			int posEnd = strExtractFrom.indexOf(strEnd, posBegin, Qt::CaseSensitive);
+			extracted.append(strExtractFrom.mid(posBegin, posEnd - posBegin));
+			posFound = posEnd;
+		}
+	}
+	else if (strBegin.isEmpty() && !strEnd.isEmpty())
+	{
+		int posBegin = 0;
+		int posEnd = strExtractFrom.indexOf(strEnd, posBegin, Qt::CaseSensitive);
+		extracted.append(strExtractFrom.mid(posBegin, posEnd - posBegin));
+		posFound = posEnd;
+	}
+	else if (!strBegin.isEmpty() && strEnd.isEmpty())
+	{
+		int posBegin = strExtractFrom.indexOf(strBegin, posFound, Qt::CaseSensitive) + strBegin.length();
+		int posEnd = strExtractFrom.length();
+		extracted.append(strExtractFrom.mid(posBegin, posEnd - posBegin));
 		posFound = posEnd;
 	}
 	return extracted;
