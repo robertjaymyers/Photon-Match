@@ -16,8 +16,6 @@
 #include <QSound>
 #include <QTimer>
 
-// TODO: Adapt reading of text files to extract [id]example[/id] as well as the string itself.
-
 PhotonMatch::PhotonMatch(QWidget *parent)
 	: QMainWindow(parent)
 {
@@ -31,9 +29,11 @@ PhotonMatch::PhotonMatch(QWidget *parent)
 	ui.newPuzzleBtn->setStyleSheet(pushButtonUtilityEnabledStyleSheet);
 	ui.chooseLangBtn->setStyleSheet(pushButtonUtilityEnabledStyleSheet);
 	ui.chooseCategoryBtn->setStyleSheet(pushButtonUtilityEnabledStyleSheet);
+	ui.chooseAudioBtn->setStyleSheet(pushButtonUtilityEnabledStyleSheet);
 
 	connect(ui.chooseLangBtn, &QPushButton::clicked, this, &PhotonMatch::chooseLanguage);
 	connect(ui.chooseCategoryBtn, &QPushButton::clicked, this, &PhotonMatch::chooseCategory);
+	connect(ui.chooseAudioBtn, &QPushButton::clicked, this, &PhotonMatch::chooseAudio);
 
 	connect(ui.newPuzzleBtn, &QPushButton::clicked, this, [=]() {
 		if (QGuiApplication::queryKeyboardModifiers().testFlag(Qt::ShiftModifier))
@@ -178,6 +178,30 @@ void PhotonMatch::chooseCategory()
 	}
 }
 
+void PhotonMatch::chooseAudio()
+{
+	if (textToSpeechSetting == "NONE")
+	{
+		textToSpeechSetting = "ALL";
+		ui.chooseAudioBtn->setText(textToSpeechSettingDisplay.arg(textToSpeechSetting));
+	}
+	else if (textToSpeechSetting == "ALL")
+	{
+		textToSpeechSetting = "LEFT";
+		ui.chooseAudioBtn->setText(textToSpeechSettingDisplay.arg(textToSpeechSetting));
+	}
+	else if (textToSpeechSetting == "LEFT")
+	{
+		textToSpeechSetting = "RIGHT";
+		ui.chooseAudioBtn->setText(textToSpeechSettingDisplay.arg(textToSpeechSetting));
+	}
+	else if (textToSpeechSetting == "RIGHT")
+	{
+		textToSpeechSetting = "NONE";
+		ui.chooseAudioBtn->setText(textToSpeechSettingDisplay.arg(textToSpeechSetting));
+	}
+}
+
 bool PhotonMatch::populateFlipCardList()
 {
 	puzzleCompleteSplash->hide();
@@ -213,16 +237,16 @@ bool PhotonMatch::populateFlipCardList()
 			newFlipCard.visState = flipCard::VisState::HIDDEN;
 			newFlipCard.wordKey = listInWordPairsMap[i][0];
 			newFlipCard.wordDisplay = listInWordPairsMap[i][0];
-			if (textToSpeechSetting == "ALL" || textToSpeechSetting == "FIRST")
-				newFlipCard.soundPath = listInWordPairsMap[i][2];
+			newFlipCard.soundPath = listInWordPairsMap[i][2];
+			newFlipCard.soundLang = flipCard::SoundLang::LEFT;
 			tempFlipCardList.push_back(std::move(newFlipCard));
 
 			flipCard newFlipCardMatch;
 			newFlipCardMatch.visState = flipCard::VisState::HIDDEN;
 			newFlipCardMatch.wordKey = listInWordPairsMap[i][0];
 			newFlipCardMatch.wordDisplay = listInWordPairsMap[i][1];
-			if (textToSpeechSetting == "ALL" || textToSpeechSetting == "SECOND")
-				newFlipCardMatch.soundPath = listInWordPairsMap[i][3];
+			newFlipCardMatch.soundPath = listInWordPairsMap[i][3];
+			newFlipCardMatch.soundLang = flipCard::SoundLang::RIGHT;
 			tempFlipCardList.push_back(std::move(newFlipCardMatch));
 		}
 
@@ -282,9 +306,13 @@ void PhotonMatch::flipClickedCard(const int btnI)
 		flipCardList[btnI].pushButtonPointer->setStyleSheet(pushButtonFlippedStyleSheet);
 		flipCardList[btnI].visState = flipCard::VisState::FLIPPED;
 		flipCardList[btnI].pushButtonPointer->setText(flipCardList[btnI].wordDisplay);
-		if (textToSpeechSetting == "ALL" || textToSpeechSetting == "FIRST" || textToSpeechSetting == "SECOND")
+		if (textToSpeechSetting == "ALL" ||
+			(textToSpeechSetting == "LEFT" && flipCardList[btnI].soundLang == flipCard::SoundLang::LEFT) ||
+			(textToSpeechSetting == "RIGHT" && flipCardList[btnI].soundLang == flipCard::SoundLang::RIGHT))
+		{
 			if (!flipCardList[btnI].soundPath.isEmpty() && flipCardList[btnI].soundPath != "NO TTS")
 				QSound::play(flipCardList[btnI].soundPath);
+		}
 
 		if (flippedCount == 1)
 		{
@@ -359,11 +387,12 @@ void PhotonMatch::prefLoad()
 				if (
 					textToSpeechState == "NONE" ||
 					textToSpeechState == "ALL" ||
-					textToSpeechState == "FIRST" ||
-					textToSpeechState == "SECOND"
+					textToSpeechState == "LEFT" ||
+					textToSpeechState == "RIGHT"
 					)
 				{
 					textToSpeechSetting = textToSpeechState;
+					ui.chooseAudioBtn->setText(textToSpeechSettingDisplay.arg(textToSpeechSetting));
 				}
 			}
 		}

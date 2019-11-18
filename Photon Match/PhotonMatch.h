@@ -40,6 +40,7 @@ private:
 		"QPushButton:hover{ background-color: #E5E5E5; }";
 
 	QString textToSpeechSetting = "NONE";
+	QString textToSpeechSettingDisplay = "SPEECH: %1";
 	QStringList langChoiceDisplayList;
 	QString currentLangKey;
 	int currentLangIndex = 0;
@@ -58,6 +59,8 @@ private:
 		QString wordKey; // the first word in map of pairs
 		QString wordDisplay; // the word to display on the button, can be first word in a pair or second
 		QString soundPath;
+		enum class SoundLang { LEFT, RIGHT, NONE };
+		SoundLang soundLang = SoundLang::NONE;
 	};
 
 	const int maxFlipped = 2; // The maximum number of "pieces" that can be in the flipped up state at the same time.
@@ -80,6 +83,7 @@ private:
 private slots:
 	void chooseLanguage();
 	void chooseCategory();
+	void chooseAudio();
 	bool populateFlipCardList();
 	void flipClickedCard(const int btnI);
 };
