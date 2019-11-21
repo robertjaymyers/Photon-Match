@@ -419,7 +419,7 @@ void PhotonMatch::populateCatDisplayList()
 	while (wordPairsMapIterator != wordPairsMap.end())
 	{
 		QString mapKey = wordPairsMapIterator->first;
-		if (mapKey.contains(currentLangKey))
+		if (currentLangKey == extractSubstringInbetweenQt("", "_", mapKey))
 		{
 			std::string catStr = extractSubstringInbetween("_", "", wordPairsMapIterator->first.toStdString());
 			newCategoriesList.append(QString::fromStdString(catStr));
