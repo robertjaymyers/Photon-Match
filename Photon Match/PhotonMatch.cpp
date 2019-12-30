@@ -1,3 +1,17 @@
+/*
+This file is part of Photon Match.
+	Photon Match is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+	Photon Match is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+	You should have received a copy of the GNU General Public License
+	along with Photon Match.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #include "PhotonMatch.h"
 #include <vector>
 #include <thread>
@@ -20,9 +34,6 @@ PhotonMatch::PhotonMatch(QWidget *parent)
 	: QMainWindow(parent)
 {
 	ui.setupUi(this);
-
-	ui.menuFile->menuAction()->setVisible(false);
-	ui.mainToolBar->setVisible(false);
 
 	puzzleCompleteSplash->setPixmap(QPixmap(appExecutablePath + "/splash/puzzle-complete-splash.png"));
 
@@ -312,6 +323,8 @@ void PhotonMatch::flipClickedCard(const int btnI)
 		{
 			if (!flipCardList[btnI].soundPath.isEmpty() && flipCardList[btnI].soundPath != "NO TTS")
 				QSound::play(flipCardList[btnI].soundPath);
+			/*else
+				qDebug() << flipCardList[btnI].soundPath;*/
 		}
 
 		if (flippedCount == 1)
