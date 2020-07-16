@@ -13,40 +13,61 @@ This file is part of Photon Match.
 */
 
 #include "PhotonMatch.h"
-#include <vector>
-#include <thread>
-#include <random>
-#include <chrono>
-#include <algorithm>
-#include <QPushButton>
-#include <QDebug>
-#include <QFile>
-#include <QDir>
-#include <QDirIterator>
-#include <QInputDialog>
-#include <QMessageBox>
-#include <QCloseEvent>
-#include <QSettings>
-#include <QSound>
-#include <QTimer>
 
 PhotonMatch::PhotonMatch(QWidget *parent)
 	: QMainWindow(parent)
 {
 	ui.setupUi(this);
 
+	ui.centralWidget->setLayout(baseLayout.get());
+	baseLayout.get()->setMargin(9);
+	baseLayout.get()->addLayout(flipCardLayout.get(), 0);
+	baseLayout.get()->insertSpacing(1, 20);
+	baseLayout.get()->addLayout(uiLayout.get(), 2);
+
 	puzzleCompleteSplash->setPixmap(QPixmap(appExecutablePath + "/splash/puzzle-complete-splash.png"));
 
-	ui.newPuzzleBtn->setStyleSheet(pushButtonUtilityEnabledStyleSheet);
-	ui.chooseLangBtn->setStyleSheet(pushButtonUtilityEnabledStyleSheet);
-	ui.chooseCategoryBtn->setStyleSheet(pushButtonUtilityEnabledStyleSheet);
-	ui.chooseAudioBtn->setStyleSheet(pushButtonUtilityEnabledStyleSheet);
+	{
+		int i = 0;
+		for (int col = 0; col < flipColLength; col++)
+		{
+			for (int row = 0; row < flipRowLength; row++)
+			{
+				flipCardMap.try_emplace(i, flipCard{});
+				flipCardMap.at(i).btn.get()->setParent(this);
+				flipCardMap.at(i).btn.get()->setMinimumSize(btnMinSize);
+				flipCardMap.at(i).btn.get()->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+				flipCardMap.at(i).btn.get()->setStyleSheet(flipCardBtnStyleSheet);
+				flipCardMap.at(i).btn.get()->setText("");
+				connect(flipCardMap.at(i).btn.get(), &QPushButton::released, this, [=]() {
+					flipClickedCard(i);
+				});
+				flipCardLayout.get()->addWidget(flipCardMap.at(i).btn.get(), row, col);
+				flipCardKeyList.emplace_back(i);
+				i++;
+			}
+		}
+	}
 
-	connect(ui.chooseLangBtn, &QPushButton::clicked, this, &PhotonMatch::chooseLanguage);
-	connect(ui.chooseCategoryBtn, &QPushButton::clicked, this, &PhotonMatch::chooseCategory);
-	connect(ui.chooseAudioBtn, &QPushButton::clicked, this, &PhotonMatch::chooseAudio);
+	uiBtnMap.try_emplace(UiBtnType::NEW_PUZZLE, uiBtn{ "NEW PUZZLE", QSize(200, 30)});
+	uiBtnMap.try_emplace(UiBtnType::CHOOSE_LANGUAGE, uiBtn{ "PICK LANGUAGE", QSize(100, 30)});
+	uiBtnMap.try_emplace(UiBtnType::CHOOSE_CATEGORY, uiBtn{ "PICK CATEGORY", QSize(100, 30)});
+	uiBtnMap.try_emplace(UiBtnType::CHOOSE_AUDIO, uiBtn{ "SPEECH: NONE", QSize(100, 30)});
 
-	connect(ui.newPuzzleBtn, &QPushButton::clicked, this, [=]() {
+	for (auto& uiPair : uiBtnMap)
+	{
+		uiPair.second.btn.get()->setParent(this);
+		uiPair.second.btn.get()->setMinimumSize(uiPair.second.minSize);
+		uiPair.second.btn.get()->setText(uiPair.second.initText);
+		uiPair.second.btn.get()->setStyleSheet(uiBtnEnabledStyleSheet);
+		uiLayout.get()->addWidget(uiPair.second.btn.get(), Qt::AlignCenter);
+	}
+
+	connect(uiBtnMap.at(UiBtnType::CHOOSE_LANGUAGE).btn.get(), &QPushButton::clicked, this, &PhotonMatch::chooseLanguage);
+	connect(uiBtnMap.at(UiBtnType::CHOOSE_CATEGORY).btn.get(), &QPushButton::clicked, this, &PhotonMatch::chooseCategory);
+	connect(uiBtnMap.at(UiBtnType::CHOOSE_AUDIO).btn.get(), &QPushButton::clicked, this, &PhotonMatch::chooseAudio);
+
+	connect(uiBtnMap.at(UiBtnType::NEW_PUZZLE).btn.get(), &QPushButton::clicked, this, [=]() {
 		if (QGuiApplication::queryKeyboardModifiers().testFlag(Qt::ShiftModifier))
 		{
 			std::random_device rd;
@@ -126,11 +147,11 @@ PhotonMatch::PhotonMatch(QWidget *parent)
 			}
 
 			// If there's a duplicate category entry, merge the two.
-			wordPairsMapIterator = wordPairsMap.begin();
-			wordPairsMapIterator = wordPairsMap.find(dictEntryKey);
-			if (wordPairsMapIterator != wordPairsMap.end())
+			//wordPairsMapIterator = wordPairsMap.begin();
+			//wordPairsMapIterator = wordPairsMap.find(dictEntryKey);
+			if (wordPairsMap.count(dictEntryKey) > 0)
 			{
-				std::vector<QStringList> mergedWordPairsList = wordPairsMapIterator->second;
+				std::vector<QStringList> mergedWordPairsList = wordPairsMap.at(dictEntryKey);
 				mergedWordPairsList.insert(mergedWordPairsList.end(), newWordPairsList.begin(), newWordPairsList.end());
 				wordPairsMap[dictEntryKey] = mergedWordPairsList;
 			}
@@ -140,12 +161,10 @@ PhotonMatch::PhotonMatch(QWidget *parent)
 	}
 
 	{
-		wordPairsMapIterator = wordPairsMap.begin();
-		while (wordPairsMapIterator != wordPairsMap.end())
+		for (auto& wordPair : wordPairsMap)
 		{
-			std::string displayLang = extractSubstringInbetween("", "_", wordPairsMapIterator->first.toStdString());
+			std::string displayLang = extractSubstringInbetween("", "_", wordPair.first.toStdString());
 			langChoiceDisplayList.append(QString::fromStdString(displayLang));
-			wordPairsMapIterator++;
 		}
 		langChoiceDisplayList.removeDuplicates();
 		currentLangKey = langChoiceDisplayList[currentLangIndex];
@@ -194,22 +213,22 @@ void PhotonMatch::chooseAudio()
 	if (textToSpeechSetting == "NONE")
 	{
 		textToSpeechSetting = "ALL";
-		ui.chooseAudioBtn->setText(textToSpeechSettingDisplay.arg(textToSpeechSetting));
+		uiBtnMap.at(UiBtnType::CHOOSE_AUDIO).btn.get()->setText(textToSpeechSettingDisplay.arg(textToSpeechSetting));
 	}
 	else if (textToSpeechSetting == "ALL")
 	{
 		textToSpeechSetting = "LEFT";
-		ui.chooseAudioBtn->setText(textToSpeechSettingDisplay.arg(textToSpeechSetting));
+		uiBtnMap.at(UiBtnType::CHOOSE_AUDIO).btn.get()->setText(textToSpeechSettingDisplay.arg(textToSpeechSetting));
 	}
 	else if (textToSpeechSetting == "LEFT")
 	{
 		textToSpeechSetting = "RIGHT";
-		ui.chooseAudioBtn->setText(textToSpeechSettingDisplay.arg(textToSpeechSetting));
+		uiBtnMap.at(UiBtnType::CHOOSE_AUDIO).btn.get()->setText(textToSpeechSettingDisplay.arg(textToSpeechSetting));
 	}
 	else if (textToSpeechSetting == "RIGHT")
 	{
 		textToSpeechSetting = "NONE";
-		ui.chooseAudioBtn->setText(textToSpeechSettingDisplay.arg(textToSpeechSetting));
+		uiBtnMap.at(UiBtnType::CHOOSE_AUDIO).btn.get()->setText(textToSpeechSettingDisplay.arg(textToSpeechSetting));
 	}
 }
 
@@ -220,90 +239,55 @@ bool PhotonMatch::populateFlipCardList()
 	flippedCount = 0;
 	flippedFirstIndex = -1;
 	solvedCount = 0;
-	std::vector<flipCard> tempFlipCardList;
-
-	//shuffleWordPairsList();
-
-	for (auto& card : flipCardList)
-	{
-		card.pushButtonPointer.get()->disconnect();
-		card.pushButtonPointer.release();
-	}
 
 	if (!wordPairsMap.empty())
 	{
-		wordPairsMapIterator = wordPairsMap.begin();
 		QString currentKeyToFind = currentLangKey + "_" + currentCatKey;
 		qDebug() << currentKeyToFind;
-		wordPairsMapIterator = wordPairsMap.find(currentKeyToFind);
-		if (wordPairsMapIterator == wordPairsMap.end())
+		if (wordPairsMap.count(currentKeyToFind) == 0)
 			return false;
 
-		std::vector<QStringList> listInWordPairsMap = wordPairsMapIterator->second;
+		std::vector<QStringList> listInWordPairsMap = wordPairsMap.at(currentKeyToFind);
 		shuffleVecOfQStringList(listInWordPairsMap);
 
-		for (int i = 0; i < (flipCardListSize / 2); i++)
-		{
-			flipCard newFlipCard;
-			newFlipCard.visState = flipCard::VisState::HIDDEN;
-			newFlipCard.wordKey = listInWordPairsMap[i][0];
-			newFlipCard.wordDisplay = listInWordPairsMap[i][0];
-			newFlipCard.soundPath = listInWordPairsMap[i][2];
-			newFlipCard.soundLang = flipCard::SoundLang::LEFT;
-			tempFlipCardList.push_back(std::move(newFlipCard));
-
-			flipCard newFlipCardMatch;
-			newFlipCardMatch.visState = flipCard::VisState::HIDDEN;
-			newFlipCardMatch.wordKey = listInWordPairsMap[i][0];
-			newFlipCardMatch.wordDisplay = listInWordPairsMap[i][1];
-			newFlipCardMatch.soundPath = listInWordPairsMap[i][3];
-			newFlipCardMatch.soundLang = flipCard::SoundLang::RIGHT;
-			tempFlipCardList.push_back(std::move(newFlipCardMatch));
-		}
-
-		flipCardList.swap(tempFlipCardList);
+		// We store a list of keys to the flip card map in a vector.
+		// To shuffle cards, we shuffle the list of keys and then we 
+		// apply from word pairs sequentially, using the list of keys sequentially.
+		// Since the list of keys has been shuffled, the order gets applied 
+		// shuffled, without needing to alter which key the flip card buttons are connected to.
 
 		shuffleFlipCardList();
 
-		flipCardList[0].pushButtonPointer.reset(ui.pushButton_1);
-		flipCardList[1].pushButtonPointer.reset(ui.pushButton_2);
-		flipCardList[2].pushButtonPointer.reset(ui.pushButton_3);
-		flipCardList[3].pushButtonPointer.reset(ui.pushButton_4);
-		flipCardList[4].pushButtonPointer.reset(ui.pushButton_5);
-		flipCardList[5].pushButtonPointer.reset(ui.pushButton_6);
-		flipCardList[6].pushButtonPointer.reset(ui.pushButton_7);
-		flipCardList[7].pushButtonPointer.reset(ui.pushButton_8);
-		flipCardList[8].pushButtonPointer.reset(ui.pushButton_9);
-		flipCardList[9].pushButtonPointer.reset(ui.pushButton_10);
-		flipCardList[10].pushButtonPointer.reset(ui.pushButton_11);
-		flipCardList[11].pushButtonPointer.reset(ui.pushButton_12);
-		flipCardList[12].pushButtonPointer.reset(ui.pushButton_13);
-		flipCardList[13].pushButtonPointer.reset(ui.pushButton_14);
-		flipCardList[14].pushButtonPointer.reset(ui.pushButton_15);
-		flipCardList[15].pushButtonPointer.reset(ui.pushButton_16);
-		flipCardList[16].pushButtonPointer.reset(ui.pushButton_17);
-		flipCardList[17].pushButtonPointer.reset(ui.pushButton_18);
-		flipCardList[18].pushButtonPointer.reset(ui.pushButton_19);
-		flipCardList[19].pushButtonPointer.reset(ui.pushButton_20);
-
-		for (const auto &card : flipCardList)
+		for (int i = 0; i < flipCardListSize / 2; i++)
 		{
-			card.pushButtonPointer->setStyleSheet(pushButtonStyleSheet);
-			card.pushButtonPointer->setEnabled(true);
-			card.pushButtonPointer->setText("");
+			qDebug() << i;
+			int flipKey = flipCardKeyList[i];
+			int flipKeyMatch = flipCardKeyList[i + 10];
+
+			flipCardMap.at(flipKey).visState = flipCard::VisState::HIDDEN;
+			flipCardMap.at(flipKey).wordKey = listInWordPairsMap[i][0];
+			flipCardMap.at(flipKey).wordDisplay = listInWordPairsMap[i][0];
+			flipCardMap.at(flipKey).soundPath = listInWordPairsMap[i][2];
+			flipCardMap.at(flipKey).soundLang = flipCard::SoundLang::LEFT;
+
+			flipCardMap.at(flipKeyMatch).visState = flipCard::VisState::HIDDEN;
+			flipCardMap.at(flipKeyMatch).wordKey = listInWordPairsMap[i][0];
+			flipCardMap.at(flipKeyMatch).wordDisplay = listInWordPairsMap[i][1];
+			flipCardMap.at(flipKeyMatch).soundPath = listInWordPairsMap[i][3];
+			flipCardMap.at(flipKeyMatch).soundLang = flipCard::SoundLang::RIGHT;
 		}
 
-		for (int i = 0; i < flipCardListSize; i++)
+		for (const auto &card : flipCardMap)
 		{
-			connect(flipCardList[i].pushButtonPointer.get(), &QPushButton::released, this, [=]() {
-				flipClickedCard(i);
-			});
+			card.second.btn.get()->setStyleSheet(flipCardBtnStyleSheet);
+			card.second.btn.get()->setEnabled(true);
+			card.second.btn.get()->setText("");
 		}
 	}
 
-	for (auto& card : flipCardList)
+	for (auto& card : flipCardMap)
 	{
-		qDebug() << card.wordDisplay;
+		qDebug() << card.second.wordDisplay;
 	}
 
 	return true;
@@ -314,15 +298,15 @@ void PhotonMatch::flipClickedCard(const int btnI)
 	if (flippedCount < maxFlipped)
 	{
 		flippedCount++;
-		flipCardList[btnI].pushButtonPointer->setStyleSheet(pushButtonFlippedStyleSheet);
-		flipCardList[btnI].visState = flipCard::VisState::FLIPPED;
-		flipCardList[btnI].pushButtonPointer->setText(flipCardList[btnI].wordDisplay);
+		flipCardMap.at(btnI).btn.get()->setStyleSheet(flipCardBtnFlippedStyleSheet);
+		flipCardMap.at(btnI).visState = flipCard::VisState::FLIPPED;
+		flipCardMap.at(btnI).btn.get()->setText(flipCardMap.at(btnI).wordDisplay);
 		if (textToSpeechSetting == "ALL" ||
-			(textToSpeechSetting == "LEFT" && flipCardList[btnI].soundLang == flipCard::SoundLang::LEFT) ||
-			(textToSpeechSetting == "RIGHT" && flipCardList[btnI].soundLang == flipCard::SoundLang::RIGHT))
+			(textToSpeechSetting == "LEFT" && flipCardMap.at(btnI).soundLang == flipCard::SoundLang::LEFT) ||
+			(textToSpeechSetting == "RIGHT" && flipCardMap.at(btnI).soundLang == flipCard::SoundLang::RIGHT))
 		{
-			if (!flipCardList[btnI].soundPath.isEmpty() && flipCardList[btnI].soundPath != "NO TTS")
-				QSound::play(flipCardList[btnI].soundPath);
+			if (!flipCardMap.at(btnI).soundPath.isEmpty() && flipCardMap.at(btnI).soundPath != "NO TTS")
+				QSound::play(flipCardMap.at(btnI).soundPath);
 			/*else
 				qDebug() << flipCardList[btnI].soundPath;*/
 		}
@@ -334,16 +318,16 @@ void PhotonMatch::flipClickedCard(const int btnI)
 		else if (flippedCount == 2)
 		{
 			QTimer::singleShot(1000, this, [=](){
-				if (flipCardList[flippedFirstIndex].wordKey == flipCardList[btnI].wordKey &&
+				if (flipCardMap.at(flippedFirstIndex).wordKey == flipCardMap.at(btnI).wordKey &&
 					flippedFirstIndex != btnI)
 				{
 					// match found, disable at both indices
-					flipCardList[flippedFirstIndex].pushButtonPointer->setEnabled(false);
-					flipCardList[btnI].pushButtonPointer->setEnabled(false);
-					flipCardList[flippedFirstIndex].visState = flipCard::VisState::SOLVED;
-					flipCardList[btnI].visState = flipCard::VisState::SOLVED;
-					flipCardList[flippedFirstIndex].pushButtonPointer->setStyleSheet(pushButtonSolvedStyleSheet);
-					flipCardList[btnI].pushButtonPointer->setStyleSheet(pushButtonSolvedStyleSheet);
+					flipCardMap.at(flippedFirstIndex).btn.get()->setEnabled(false);
+					flipCardMap.at(btnI).btn.get()->setEnabled(false);
+					flipCardMap.at(flippedFirstIndex).visState = flipCard::VisState::SOLVED;
+					flipCardMap.at(btnI).visState = flipCard::VisState::SOLVED;
+					flipCardMap.at(flippedFirstIndex).btn.get()->setStyleSheet(flipCardBtnSolvedStyleSheet);
+					flipCardMap.at(btnI).btn.get()->setStyleSheet(flipCardBtnSolvedStyleSheet);
 					solvedCount++;
 					flippedCount = 0;
 
@@ -360,12 +344,12 @@ void PhotonMatch::flipClickedCard(const int btnI)
 					// match not found, wait for a short period of time...
 					// then change cards back to hidden state...
 					// and reset flipped variables, like count and stored index
-					flipCardList[flippedFirstIndex].visState = flipCard::VisState::HIDDEN;
-					flipCardList[btnI].visState = flipCard::VisState::HIDDEN;
-					flipCardList[flippedFirstIndex].pushButtonPointer->setText("");
-					flipCardList[btnI].pushButtonPointer->setText("");
-					flipCardList[flippedFirstIndex].pushButtonPointer->setStyleSheet(pushButtonStyleSheet);
-					flipCardList[btnI].pushButtonPointer->setStyleSheet(pushButtonStyleSheet);
+					flipCardMap.at(flippedFirstIndex).visState = flipCard::VisState::HIDDEN;
+					flipCardMap.at(btnI).visState = flipCard::VisState::HIDDEN;
+					flipCardMap.at(flippedFirstIndex).btn.get()->setText("");
+					flipCardMap.at(btnI).btn.get()->setText("");
+					flipCardMap.at(flippedFirstIndex).btn.get()->setStyleSheet(flipCardBtnStyleSheet);
+					flipCardMap.at(btnI).btn.get()->setStyleSheet(flipCardBtnStyleSheet);
 					flippedCount = 0;
 				}
 				//qDebug("Timer went off.");
@@ -405,7 +389,7 @@ void PhotonMatch::prefLoad()
 					)
 				{
 					textToSpeechSetting = textToSpeechState;
-					ui.chooseAudioBtn->setText(textToSpeechSettingDisplay.arg(textToSpeechSetting));
+					uiBtnMap.at(UiBtnType::CHOOSE_AUDIO).btn.get()->setText(textToSpeechSettingDisplay.arg(textToSpeechSetting));
 				}
 			}
 		}
@@ -428,16 +412,14 @@ void PhotonMatch::prefSave()
 void PhotonMatch::populateCatDisplayList()
 {
 	QStringList newCategoriesList;
-	wordPairsMapIterator = wordPairsMap.begin();
-	while (wordPairsMapIterator != wordPairsMap.end())
+	for (auto& wordPair : wordPairsMap)
 	{
-		QString mapKey = wordPairsMapIterator->first;
+		QString mapKey = wordPair.first;
 		if (currentLangKey == extractSubstringInbetweenQt("", "_", mapKey))
 		{
-			std::string catStr = extractSubstringInbetween("_", "", wordPairsMapIterator->first.toStdString());
+			std::string catStr = extractSubstringInbetween("_", "", wordPair.first.toStdString());
 			newCategoriesList.append(QString::fromStdString(catStr));
 		}
-		wordPairsMapIterator++;
 	}
 	catChoiceDisplayList = newCategoriesList;
 }
@@ -451,7 +433,7 @@ void PhotonMatch::shuffleVecOfQStringList(std::vector<QStringList> &listToShuffl
 void PhotonMatch::shuffleFlipCardList()
 {
 	int seed = std::chrono::system_clock::now().time_since_epoch().count();
-	shuffle(flipCardList.begin(), flipCardList.end(), std::default_random_engine(seed));
+	shuffle(flipCardKeyList.begin(), flipCardKeyList.end(), std::default_random_engine(seed));
 }
 
 std::string PhotonMatch::extractSubstringInbetween(const std::string strBegin, const std::string strEnd, const std::string &strExtractFrom)

@@ -18,7 +18,25 @@ This file is part of Photon Match.
 #include "ui_PhotonMatch.h"
 #include <QSplashScreen>
 #include <QSoundEffect>
+#include <QPushButton>
+#include <QGridLayout>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QDebug>
+#include <QFile>
+#include <QDir>
+#include <QDirIterator>
+#include <QInputDialog>
+#include <QMessageBox>
+#include <QCloseEvent>
+#include <QSettings>
+#include <QSound>
+#include <QTimer>
 #include <memory>
+#include <vector>
+#include <random>
+#include <chrono>
+#include <algorithm>
 
 class PhotonMatch : public QMainWindow
 {
@@ -33,25 +51,38 @@ private:
 
 	const QString appExecutablePath = QCoreApplication::applicationDirPath();
 
-	const QString pushButtonStyleSheet =
+	std::unique_ptr<QVBoxLayout> baseLayout = std::make_unique<QVBoxLayout>();
+	std::unique_ptr<QGridLayout> flipCardLayout = std::make_unique<QGridLayout>();
+	std::unique_ptr<QHBoxLayout> uiLayout = std::make_unique<QHBoxLayout>();
+
+	const QString flipCardBtnStyleSheet =
 		"QPushButton{ background-color: #CCCCCC; border-style: solid; border-width: 2px; border-color: #404040; }"
 		"QPushButton:hover{ background-color: #FFD800; border-color: #282200; border-width: 10px; }";
 
-	const QString pushButtonFlippedStyleSheet =
+	const QString flipCardBtnFlippedStyleSheet =
 		"QPushButton{ background-color: #FFF6CC; border-style: solid; border-width: 2px; border-color: #26241E; font: bold 14px;}"
 		"QPushButton:hover{ background-color: #FFF6CC; }";
 
-	const QString pushButtonSolvedStyleSheet =
+	const QString flipCardBtnSolvedStyleSheet =
 		"QPushButton{ background-color: #E5E5E5; border-style: solid; border-width: 2px; border-color: #999999; font: bold 14px;}"
 		"QPushButton:hover{ background-color: #E5E5E5; }";
 
-	const QString pushButtonUtilityEnabledStyleSheet =
-		"QPushButton{ background-color: #CCCCCC; border-style: solid; border-width: 2px; border-color: #404040; padding: 4px; }"
+	const QString uiBtnEnabledStyleSheet =
+		"QPushButton{ font-weight: bold; background-color: #CCCCCC; border-style: solid; border-width: 2px; border-color: #404040; padding: 4px; }"
 		"QPushButton:hover{ background-color: #FFD800; border-color: #282200; color: #000000; border-width: 4px; }";
 
-	const QString pushButtonUtilityDisabledStyleSheet =
-		"QPushButton{ background-color: #E5E5E5; border-style: solid; border-width: 2px; border-color: #999999; padding: 4px; }"
+	const QString uiBtnDisabledStyleSheet =
+		"QPushButton{ font-weight: bold; background-color: #E5E5E5; border-style: solid; border-width: 2px; border-color: #999999; padding: 4px; }"
 		"QPushButton:hover{ background-color: #E5E5E5; }";
+
+	enum class UiBtnType { NEW_PUZZLE, CHOOSE_LANGUAGE, CHOOSE_CATEGORY, CHOOSE_AUDIO };
+	struct uiBtn
+	{
+		const QString initText;
+		const QSize minSize;
+		std::unique_ptr<QPushButton> btn = std::make_unique<QPushButton>();
+	};
+	std::map<UiBtnType, uiBtn> uiBtnMap;
 
 	QString textToSpeechSetting = "NONE";
 	QString textToSpeechSettingDisplay = "SPEECH: %1";
@@ -63,11 +94,10 @@ private:
 	int currentCatIndex = 0;
 
 	std::map<QString, std::vector<QStringList>> wordPairsMap;
-	std::map<QString, std::vector<QStringList>>::iterator wordPairsMapIterator;
 
 	struct flipCard
 	{
-		std::unique_ptr <QPushButton> pushButtonPointer = std::make_unique<QPushButton>();
+		std::unique_ptr<QPushButton> btn = std::make_unique<QPushButton>();
 		enum class VisState { HIDDEN, FLIPPED, SOLVED };
 		VisState visState = VisState::HIDDEN;
 		QString wordKey; // the first word in map of pairs
@@ -77,12 +107,17 @@ private:
 		SoundLang soundLang = SoundLang::NONE;
 	};
 
+	std::map<int, flipCard> flipCardMap;
+	std::vector<int> flipCardKeyList;
+
+	const QSize btnMinSize = QSize(100, 100);
 	const int maxFlipped = 2; // The maximum number of "pieces" that can be in the flipped up state at the same time.
 	int flippedCount = 0;
 	int flippedFirstIndex = -1;
 	const int flipCardListSize = 20;
+	const int flipRowLength = 4;
+	const int flipColLength = 5;
 	int solvedCount = 0;
-	std::vector<flipCard> flipCardList;
 
 	std::unique_ptr<QSplashScreen> puzzleCompleteSplash = std::make_unique<QSplashScreen>();
 
