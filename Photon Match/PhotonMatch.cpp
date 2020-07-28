@@ -28,6 +28,7 @@ PhotonMatch::PhotonMatch(QWidget *parent)
 	puzzleCompleteSplash->setPixmap(QPixmap(appExecutablePath + "/splash/puzzle-complete-splash.png"));
 
 	{
+		flipCardLayout.get()->setAlignment(Qt::AlignCenter);
 		int i = 0;
 		for (int col = 0; col < flipColLength; col++)
 		{
@@ -36,6 +37,7 @@ PhotonMatch::PhotonMatch(QWidget *parent)
 				flipCardMap.try_emplace(i, flipCard{});
 				flipCardMap.at(i).btn.get()->setParent(this);
 				flipCardMap.at(i).btn.get()->setMinimumSize(btnMinSize);
+				flipCardMap.at(i).btn.get()->setMaximumSize(btnMaxSize);
 				flipCardMap.at(i).btn.get()->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 				flipCardMap.at(i).btn.get()->setStyleSheet(flipCardBtnStyleSheet);
 				flipCardMap.at(i).btn.get()->setText("");
@@ -49,18 +51,19 @@ PhotonMatch::PhotonMatch(QWidget *parent)
 		}
 	}
 
-	uiBtnMap.try_emplace(UiBtnType::NEW_PUZZLE, uiBtn{ "NEW PUZZLE", QSize(200, 30)});
-	uiBtnMap.try_emplace(UiBtnType::CHOOSE_LANGUAGE, uiBtn{ "PICK LANGUAGE", QSize(100, 30)});
-	uiBtnMap.try_emplace(UiBtnType::CHOOSE_CATEGORY, uiBtn{ "PICK CATEGORY", QSize(100, 30)});
-	uiBtnMap.try_emplace(UiBtnType::CHOOSE_AUDIO, uiBtn{ "SPEECH: NONE", QSize(100, 30)});
+	uiBtnMap.try_emplace(UiBtnType::NEW_PUZZLE, uiBtn{ "NEW PUZZLE", QSize(180, 30)});
+	uiBtnMap.try_emplace(UiBtnType::CHOOSE_LANGUAGE, uiBtn{ "PICK LANGUAGE", QSize(150, 30)});
+	uiBtnMap.try_emplace(UiBtnType::CHOOSE_CATEGORY, uiBtn{ "PICK CATEGORY", QSize(150, 30)});
+	uiBtnMap.try_emplace(UiBtnType::CHOOSE_AUDIO, uiBtn{ "SPEECH: NONE", QSize(150, 30)});
 
+	uiLayout.get()->setAlignment(Qt::AlignHCenter);
 	for (auto& uiPair : uiBtnMap)
 	{
 		uiPair.second.btn.get()->setParent(this);
 		uiPair.second.btn.get()->setMinimumSize(uiPair.second.minSize);
 		uiPair.second.btn.get()->setText(uiPair.second.initText);
 		uiPair.second.btn.get()->setStyleSheet(uiBtnEnabledStyleSheet);
-		uiLayout.get()->addWidget(uiPair.second.btn.get(), Qt::AlignCenter);
+		uiLayout.get()->addWidget(uiPair.second.btn.get());
 	}
 
 	connect(uiBtnMap.at(UiBtnType::CHOOSE_LANGUAGE).btn.get(), &QPushButton::clicked, this, &PhotonMatch::chooseLanguage);
@@ -147,8 +150,6 @@ PhotonMatch::PhotonMatch(QWidget *parent)
 			}
 
 			// If there's a duplicate category entry, merge the two.
-			//wordPairsMapIterator = wordPairsMap.begin();
-			//wordPairsMapIterator = wordPairsMap.find(dictEntryKey);
 			if (wordPairsMap.count(dictEntryKey) > 0)
 			{
 				std::vector<QStringList> mergedWordPairsList = wordPairsMap.at(dictEntryKey);

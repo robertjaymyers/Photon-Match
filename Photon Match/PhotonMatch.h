@@ -110,7 +110,8 @@ private:
 	std::map<int, flipCard> flipCardMap;
 	std::vector<int> flipCardKeyList;
 
-	const QSize btnMinSize = QSize(100, 100);
+	const QSize btnMinSize = QSize(125, 125);
+	const QSize btnMaxSize = QSize(150, 150);
 	const int maxFlipped = 2; // The maximum number of "pieces" that can be in the flipped up state at the same time.
 	int flippedCount = 0;
 	int flippedFirstIndex = -1;
