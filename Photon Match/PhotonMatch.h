@@ -63,8 +63,16 @@ private:
 		"QPushButton{ background-color: #FFF6CC; border-style: solid; border-width: 2px; border-color: #26241E; font: bold 14px;}"
 		"QPushButton:hover{ background-color: #FFF6CC; }";
 
+	const QString flipCardBtnFlippedImgStyleSheet =
+		"QPushButton{ background-image: url(%1); background-color: #FFF6CC; border-style: solid; border-width: 2px; border-color: #26241E; font: bold 14px;}"
+		"QPushButton:hover{ background-color: #FFF6CC; }";
+
 	const QString flipCardBtnSolvedStyleSheet =
 		"QPushButton{ background-color: #E5E5E5; border-style: solid; border-width: 2px; border-color: #999999; font: bold 14px;}"
+		"QPushButton:hover{ background-color: #E5E5E5; }";
+
+	const QString flipCardBtnSolvedImgStyleSheet =
+		"QPushButton{ background-image: url(%1); background-color: #E5E5E5; border-style: solid; border-width: 2px; border-color: #999999; font: bold 14px;}"
 		"QPushButton:hover{ background-color: #E5E5E5; }";
 
 	const QString uiBtnEnabledStyleSheet =
@@ -105,6 +113,7 @@ private:
 		QString soundPath;
 		enum class SoundLang { LEFT, RIGHT, NONE };
 		SoundLang soundLang = SoundLang::NONE;
+		QString bgImgPath;
 	};
 
 	std::map<int, flipCard> flipCardMap;

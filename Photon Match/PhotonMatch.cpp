@@ -119,13 +119,13 @@ PhotonMatch::PhotonMatch(QWidget *parent)
 					QString soundPathFirst = QFileInfo(currentFile).path();
 					soundPathFirst.replace("WordPairs", "TextToSpeech");
 					soundPathFirst.append("/" + QFileInfo(currentFile).baseName());
-					QString wordFirstId = extractSubstringInbetweenQt("[id]", "[/id]", wordPair[0]);
+					const QString wordFirstId = extractSubstringInbetweenQt("[id]", "[/id]", wordPair[0]);
 					soundPathFirst.append("/" + wordFirstId + ".wav");
 
 					QString soundPathSecond = QFileInfo(currentFile).path();
 					soundPathSecond.replace("WordPairs", "TextToSpeech");
 					soundPathSecond.append("/" + QFileInfo(currentFile).baseName());
-					QString wordSecondId = extractSubstringInbetweenQt("[id]", "[/id]", wordPair[1]);
+					const QString wordSecondId = extractSubstringInbetweenQt("[id]", "[/id]", wordPair[1]);
 					soundPathSecond.append("/" + wordSecondId + ".wav");
 
 					if (QFileInfo::exists(soundPathFirst))
@@ -137,6 +137,13 @@ PhotonMatch::PhotonMatch(QWidget *parent)
 						wordPair.append(soundPathSecond);
 					else
 						wordPair.append("NO TTS");
+
+					QString imgPath = QFileInfo(currentFile).path();
+					imgPath.append("/img/" + wordFirstId + "_" + wordSecondId + ".png");
+					if (QFileInfo::exists(imgPath))
+						wordPair.append(imgPath);
+					else
+						wordPair.append("NO IMG");
 
 					wordPair[0] = extractSubstringInbetweenQt("[/id]", "", wordPair[0]);
 					wordPair[1] = extractSubstringInbetweenQt("[/id]", "", wordPair[1]);
@@ -276,6 +283,10 @@ bool PhotonMatch::populateFlipCardList()
 			flipCardMap.at(flipKeyMatch).wordDisplay = listInWordPairsMap[i][1];
 			flipCardMap.at(flipKeyMatch).soundPath = listInWordPairsMap[i][3];
 			flipCardMap.at(flipKeyMatch).soundLang = flipCard::SoundLang::RIGHT;
+
+			const QString imgPath = listInWordPairsMap[i][4];
+			flipCardMap.at(flipKey).bgImgPath = imgPath;
+			flipCardMap.at(flipKeyMatch).bgImgPath = imgPath;
 		}
 
 		for (const auto &card : flipCardMap)
@@ -299,7 +310,13 @@ void PhotonMatch::flipClickedCard(const int btnI)
 	if (flippedCount < maxFlipped)
 	{
 		flippedCount++;
-		flipCardMap.at(btnI).btn.get()->setStyleSheet(flipCardBtnFlippedStyleSheet);
+		if (!flipCardMap.at(btnI).bgImgPath.isEmpty() && flipCardMap.at(btnI).bgImgPath != "NO IMG")
+		{
+			flipCardMap.at(btnI).btn.get()->setStyleSheet(flipCardBtnFlippedImgStyleSheet
+				.arg(flipCardMap.at(btnI).bgImgPath));
+		}
+		else
+			flipCardMap.at(btnI).btn.get()->setStyleSheet(flipCardBtnFlippedStyleSheet);
 		flipCardMap.at(btnI).visState = flipCard::VisState::FLIPPED;
 		flipCardMap.at(btnI).btn.get()->setText(flipCardMap.at(btnI).wordDisplay);
 		if (textToSpeechSetting == "ALL" ||
@@ -327,8 +344,25 @@ void PhotonMatch::flipClickedCard(const int btnI)
 					flipCardMap.at(btnI).btn.get()->setEnabled(false);
 					flipCardMap.at(flippedFirstIndex).visState = flipCard::VisState::SOLVED;
 					flipCardMap.at(btnI).visState = flipCard::VisState::SOLVED;
-					flipCardMap.at(flippedFirstIndex).btn.get()->setStyleSheet(flipCardBtnSolvedStyleSheet);
-					flipCardMap.at(btnI).btn.get()->setStyleSheet(flipCardBtnSolvedStyleSheet);
+
+					if (!flipCardMap.at(flippedFirstIndex).bgImgPath.isEmpty() && flipCardMap.at(flippedFirstIndex).bgImgPath != "NO IMG")
+					{
+						flipCardMap.at(flippedFirstIndex).btn.get()->setStyleSheet(flipCardBtnSolvedImgStyleSheet
+							.arg(flipCardMap.at(flippedFirstIndex).bgImgPath));
+					}
+					else
+						flipCardMap.at(flippedFirstIndex).btn.get()->setStyleSheet(flipCardBtnSolvedStyleSheet);
+					if (!flipCardMap.at(btnI).bgImgPath.isEmpty() && flipCardMap.at(btnI).bgImgPath != "NO IMG")
+					{
+						flipCardMap.at(btnI).btn.get()->setStyleSheet(flipCardBtnSolvedImgStyleSheet
+							.arg(flipCardMap.at(btnI).bgImgPath));
+					}
+					else
+						flipCardMap.at(btnI).btn.get()->setStyleSheet(flipCardBtnSolvedStyleSheet);
+
+					//flipCardMap.at(flippedFirstIndex).btn.get()->setStyleSheet(flipCardBtnSolvedStyleSheet);
+					//flipCardMap.at(btnI).btn.get()->setStyleSheet(flipCardBtnSolvedStyleSheet);
+
 					solvedCount++;
 					flippedCount = 0;
 
